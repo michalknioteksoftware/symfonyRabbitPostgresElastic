@@ -17,15 +17,16 @@ framework:
                     queues:
                         messages: ~
 
-            # Dead-letter queue for permanently failed messages
+            # Dead-letter transport — uses Doctrine (PostgreSQL) so that
+            # messenger:failed:show / messenger:failed:retry work correctly.
+            # AMQP does not support those introspection commands.
             failed:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    exchange:
-                        name: messages_failed
-                    queues:
-                        messages_failed: ~
+                dsn: 'doctrine://default?queue_name=failed'
 
         routing:
             App\Message\ExampleMessage: async
             App\Message\ArticlePublishedMessage: async
+            # RabbitMQ demo messages
+            App\Message\NotificationMessage: async        # always succeeds
+            App\Message\ReportGenerationMessage: async    # fails twice, then succeeds
+            App\Message\PermanentlyFailingMessage: async  # always fails → dead-letter queue

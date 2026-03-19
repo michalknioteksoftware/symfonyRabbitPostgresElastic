@@ -26,6 +26,10 @@
            class="{{ app.request.attributes.get('_route') starts with 'article_web_' ? 'active' : '' }}">
             Articles
         </a>
+        <a href="{{ path('rabbitmq_demo_index') }}"
+           class="{{ app.request.attributes.get('_route') starts with 'rabbitmq_demo_' ? 'active' : '' }}">
+            RabbitMQ Demo
+        </a>
         <a href="{{ path('health_check') }}">Health</a>
         <a href="{{ path('_profiler_home') }}">Profiler</a>
     </nav>

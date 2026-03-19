@@ -1,0 +1,218 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}RabbitMQ Demo · Symfony 8 Boilerplate{% endblock %}
+{% block header_title %}RabbitMQ Demo{% endblock %}
+{% block header_sub %}Dispatch messages and watch them flow through the queue{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ asset('css/rabbitmq_demo.css') }}">
+{% endblock %}
+
+{% block body %}
+
+{# ── Concept map ── #}
+<p class="section-title">How Symfony Messenger + RabbitMQ works</p>
+<div class="concept-flow">
+    <div class="flow-step flow-step--blue">
+        <div class="flow-icon">🌐</div>
+        <strong>HTTP Request</strong>
+        <span>Controller calls<br><code>$bus->dispatch(new XxxMessage(…))</code></span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-step--orange">
+        <div class="flow-icon">🐰</div>
+        <strong>RabbitMQ Queue</strong>
+        <span>Message serialised to JSON, stored in <em>messages</em> queue</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-step--green">
+        <div class="flow-icon">⚙️</div>
+        <strong>Worker Process</strong>
+        <span>Picks message up, calls<br><code>XxxHandler::__invoke()</code></span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-step--outcome">
+        <div class="flow-icon">✅ / ♻️ / 💀</div>
+        <strong>Outcome</strong>
+        <span>ACK · Retry · Dead-letter</span>
+    </div>
+</div>
+
+{# ── Outcome legend ── #}
+<div class="legend-row">
+    <div class="legend-card legend-card--green">
+        <strong>✅ ACK (success)</strong>
+        <p>Handler returns normally. Messenger sends an acknowledgement to RabbitMQ. The message is deleted from the queue.</p>
+    </div>
+    <div class="legend-card legend-card--orange">
+        <strong>♻️ NACK + Retry</strong>
+        <p>Handler throws a recoverable exception. Messenger requeues with exponential back-off (×2). Max 3 attempts (messenger.yaml).</p>
+    </div>
+    <div class="legend-card legend-card--red">
+        <strong>💀 Dead-letter queue</strong>
+        <p>All retries exhausted, <em>or</em> handler throws <code>UnrecoverableMessageHandlingException</code>. Message moves to <em>messages_failed</em> queue.</p>
+    </div>
+</div>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   EXAMPLE 1 — Happy path
+════════════════════════════════════════════════════════════════════════════ #}
+<p class="section-title">Example 1 — Happy path <span class="pill pill--green">always succeeds</span></p>
+<div class="demo-card">
+    <div class="demo-card__explain">
+        <h3>NotificationMessage</h3>
+        <p>Simulates sending an e-mail, Slack message, or push notification. The handler always returns normally, so RabbitMQ receives an ACK and removes the message immediately.</p>
+        <div class="code-snippet"><pre>
+$bus->dispatch(new NotificationMessage(
+    recipient: 'user@example.com',
+    subject:   'Hello from Messenger',
+    body:      'Async message delivered!',
+));
+        </pre></div>
+        <p class="hint">👀 Watch the worker: <code>docker compose logs -f worker</code></p>
+    </div>
+    <form class="demo-card__form" method="POST"
+          action="{{ path('rabbitmq_demo_dispatch_notification') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('rabbitmq_demo') }}">
+        <div class="form-group">
+            <label>Recipient e-mail</label>
+            <input type="email" name="recipient" value="alice@example.com">
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" name="subject" value="Hello from Symfony Messenger">
+        </div>
+        <div class="form-group">
+            <label>Body</label>
+            <textarea name="body" rows="2">This message was delivered asynchronously via RabbitMQ!</textarea>
+        </div>
+        <button class="btn btn--green" type="submit">📨 Dispatch notification</button>
+    </form>
+</div>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   EXAMPLE 2 — Flaky / retry path
+════════════════════════════════════════════════════════════════════════════ #}
+<p class="section-title">Example 2 — Retry path <span class="pill pill--orange">fails twice, succeeds on attempt 3</span></p>
+<div class="demo-card">
+    <div class="demo-card__explain">
+        <h3>ReportGenerationMessage</h3>
+        <p>Simulates a handler that hits a transient error (slow DB, external API timeout). It throws <code>RecoverableMessageHandlingException</code> on attempts 1 and 2, then succeeds on attempt 3.</p>
+        <p>Messenger re-queues with exponential back-off: <strong>1 s → 2 s → success</strong>.</p>
+        <div class="code-snippet"><pre>
+// messenger.yaml
+retry_strategy:
+    max_retries: 3
+    multiplier: 2   // wait doubles each time
+
+// Handler
+if ($retryCount &lt; 2) {
+    throw new RecoverableMessageHandlingException('Transient!');
+}
+// 3rd attempt: success
+        </pre></div>
+        <p class="hint">👀 Watch retries: <code>docker compose logs -f worker</code><br>
+           👀 See message requeue in: <a href="http://localhost:15672" target="_blank">RabbitMQ UI</a> → Queues → messages</p>
+    </div>
+    <form class="demo-card__form" method="POST"
+          action="{{ path('rabbitmq_demo_dispatch_report') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('rabbitmq_demo') }}">
+        <div class="form-group">
+            <label>Report type</label>
+            <input type="text" name="report_type" value="monthly-summary">
+        </div>
+        <div class="form-group">
+            <label>Requested by (user ID)</label>
+            <input type="number" name="user_id" value="1" min="1">
+        </div>
+        <button class="btn btn--orange" type="submit">📊 Dispatch report (will retry)</button>
+    </form>
+</div>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   EXAMPLE 3 — Dead-letter path
+════════════════════════════════════════════════════════════════════════════ #}
+<p class="section-title">Example 3 — Dead-letter queue <span class="pill pill--red">always fails → messages_failed</span></p>
+<div class="demo-card">
+    <div class="demo-card__explain">
+        <h3>PermanentlyFailingMessage</h3>
+        <p>Simulates an unrecoverable error: broken config, impossible business rule, or a bug that needs a code fix. The handler throws <code>UnrecoverableMessageHandlingException</code>, which <strong>bypasses all retries</strong> and moves the message directly to the <em>messages_failed</em> dead-letter queue.</p>
+        <div class="code-snippet"><pre>
+// Handler
+throw new UnrecoverableMessageHandlingException(
+    'Broken config — no point retrying.'
+);
+
+// Inspect the dead-letter queue
+docker compose exec app \
+  php bin/console messenger:failed:show
+
+// Retry a specific message (id from above)
+docker compose exec app \
+  php bin/console messenger:failed:retry 1
+        </pre></div>
+        <p class="hint">👀 After dispatching, run <code>messenger:failed:show</code> to see the message in the dead-letter queue.<br>
+           👀 Also visible in: <a href="http://localhost:15672" target="_blank">RabbitMQ UI</a> → Queues → messages_failed</p>
+    </div>
+    <form class="demo-card__form" method="POST"
+          action="{{ path('rabbitmq_demo_dispatch_failing') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('rabbitmq_demo') }}">
+        <div class="form-group">
+            <label>Failure reason</label>
+            <input type="text" name="reason" value="Simulated unrecoverable error">
+        </div>
+        <button class="btn btn--red" type="submit">💀 Dispatch failing message</button>
+    </form>
+</div>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   Bulk dispatch
+════════════════════════════════════════════════════════════════════════════ #}
+<p class="section-title">Bulk dispatch — fill the queue at once</p>
+<div class="demo-card demo-card--bulk">
+    <div class="demo-card__explain">
+        <h3>Dispatch all three types together</h3>
+        <p>Sends N notifications + 1 flaky report + 1 permanently failing message at once. Open the <a href="http://localhost:15672" target="_blank">RabbitMQ Management UI</a> and watch the <em>messages</em> queue fill up and drain as the worker processes them.</p>
+        <p class="hint">💡 Tip: pause the worker first to see messages queue up, then resume it.<br>
+           <code>docker compose stop worker</code> → dispatch → <code>docker compose start worker</code></p>
+    </div>
+    <form class="demo-card__form" method="POST"
+          action="{{ path('rabbitmq_demo_dispatch_bulk') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('rabbitmq_demo') }}">
+        <div class="form-group">
+            <label>Notification count (1–20)</label>
+            <input type="number" name="count" value="5" min="1" max="20">
+        </div>
+        <button class="btn btn--purple" type="submit">🚀 Bulk dispatch</button>
+    </form>
+</div>
+
+{# ── Console reference ── #}
+<p class="section-title">Essential console commands</p>
+<div class="code-block">
+    <pre>
+<span class="cmt"># Start the worker (consume from the async queue)</span>
+<span class="cmd">docker compose exec app php bin/console messenger:consume async -vv</span>
+
+<span class="cmt"># List messages in the dead-letter queue</span>
+<span class="cmd">docker compose exec app php bin/console messenger:failed:show</span>
+
+<span class="cmt"># Inspect a specific failed message (e.g. id=1)</span>
+<span class="cmd">docker compose exec app php bin/console messenger:failed:show 1 -vv</span>
+
+<span class="cmt"># Retry one specific failed message</span>
+<span class="cmd">docker compose exec app php bin/console messenger:failed:retry 1</span>
+
+<span class="cmt"># Retry ALL failed messages</span>
+<span class="cmd">docker compose exec app php bin/console messenger:failed:retry --all</span>
+
+<span class="cmt"># View worker logs live</span>
+<span class="cmd">docker compose logs -f worker</span>
+
+<span class="cmt"># Stop / start the background worker service</span>
+<span class="cmd">docker compose stop worker</span>
+<span class="cmd">docker compose start worker</span>
+    </pre>
+</div>
+
+{% endblock %}
