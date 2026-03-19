@@ -1,6 +1,6 @@
-# Symfony 7.4 Boilerplate
+# Symfony 8 Boilerplate
 
-A production-ready boilerplate built with **Symfony 7.4 LTS** and **PHP 8.4**, fully containerised with Docker Compose.
+A production-ready boilerplate built with **Symfony 8** and **PHP 8.4**, fully containerised with Docker Compose.
 
 ## Stack
 
@@ -12,6 +12,7 @@ A production-ready boilerplate built with **Symfony 7.4 LTS** and **PHP 8.4**, f
 | Redis           | `redis:7-alpine`               | 7       |
 | RabbitMQ        | `rabbitmq:3-management-alpine` | 3       |
 | Elasticsearch   | `elasticsearch:8.17.0`         | 8.17    |
+| elasticvue      | `cars10/elasticvue`            | latest  |
 
 ## Project Layout
 
@@ -198,10 +199,11 @@ docker compose down -v
 | **Symfony Web Profiler**   | http://localhost:8080/_profiler          | —                     |
 | **RabbitMQ Management UI** | http://localhost:15672                   | `guest` / `guest`     |
 | **Elasticsearch REST API** | http://localhost:9200                    | —                     |
+| **elasticvue UI**          | http://localhost:8090                    | —                     |
 | **PostgreSQL**             | `localhost:5432` (use a DB client)       | `app` / `app` / `app` |
 | **Redis**                  | `localhost:6379` (use `redis-cli`)       | —                     |
 
-> Port numbers can be overridden in `.env` via `NGINX_PORT`, `POSTGRES_PORT`, `REDIS_PORT`, `RABBITMQ_PORT`, `RABBITMQ_MANAGEMENT_PORT`, `ELASTICSEARCH_PORT`.
+> Port numbers can be overridden in `.env` via `NGINX_PORT`, `POSTGRES_PORT`, `REDIS_PORT`, `RABBITMQ_PORT`, `RABBITMQ_MANAGEMENT_PORT`, `ELASTICSEARCH_PORT`, `ELASTICVUE_PORT`.
 
 ### Quick Connectivity Checks
 
@@ -253,6 +255,18 @@ $this->messageBus->dispatch(new \App\Message\ExampleMessage('hello'));
 
 ### Elasticsearch
 The `ElasticsearchService` wraps the official `elastic/elasticsearch` PHP client and exposes `index`, `get`, `search`, `delete`, and `createIndex` methods. The underlying `Elastic\Elasticsearch\Client` is registered as a service via `ElasticsearchClientFactory` and can be injected directly when you need lower-level access.
+
+### elasticvue
+[elasticvue](https://elasticvue.com) is a lightweight browser-based GUI for Elasticsearch. It runs as a separate Docker container on port **8090**.
+
+**Connecting for the first time:**
+
+1. Open **http://localhost:8090**
+2. Click **"Add Elasticsearch cluster"**
+3. Set the URI to **`http://localhost:9200`**
+4. Click **Connect**
+
+From the UI you can browse indices, inspect and edit documents, run raw DSL queries, view index mappings and settings, and monitor cluster health. The `articles` index is created automatically the first time an article is published via the Messenger worker.
 
 ### PostgreSQL
 Doctrine ORM is configured with attribute-based mapping. Place entities in `src/Entity/`, generate migrations with `doctrine:migrations:diff`, and apply them with `doctrine:migrations:migrate`.

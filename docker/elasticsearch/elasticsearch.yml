@@ -1,0 +1,11 @@
+cluster.name: docker-cluster
+network.host: 0.0.0.0
+discovery.type: single-node
+xpack.security.enabled: false
+bootstrap.memory_lock: true
+
+# Allow elasticvue (and any other browser-based client) to query the REST API directly.
+http.cors.enabled: true
+http.cors.allow-origin: "http://localhost:8090"
+http.cors.allow-headers: "X-Requested-With,Content-Type,Content-Length,Authorization"
+http.cors.allow-credentials: true

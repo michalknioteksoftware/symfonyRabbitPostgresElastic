@@ -116,13 +116,17 @@ services:
     networks:
       - symfony
 
+  elasticvue:
+    image: cars10/elasticvue:latest
+    ports:
+      - "${ELASTICVUE_PORT:-8090}:8080"
+    networks:
+      - symfony
+
   elasticsearch:
     image: elasticsearch:8.17.0
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - bootstrap.memory_lock=true
     ulimits:
       memlock:
         soft: -1
@@ -131,6 +135,7 @@ services:
       - "${ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./docker/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s
