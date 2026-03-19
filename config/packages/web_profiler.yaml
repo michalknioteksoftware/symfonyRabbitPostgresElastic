@@ -6,4 +6,5 @@ when@dev:
     framework:
         profiler:
             only_exceptions: false
-            collect_serializer_data: true
+            # Explicit file DSN so the storage location is never ambiguous
+            dsn: 'file:%kernel.cache_dir%/profiler'

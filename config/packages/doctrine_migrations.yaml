@@ -1,4 +1,7 @@
 doctrine_migrations:
     migrations_paths:
         'App\Migrations': '%kernel.project_dir%/migrations'
-    enable_profiler: '%kernel.debug%'
+    # Disable the profiler collector — it runs a live DB query on every
+    # profiled request to compare applied vs available migrations, which
+    # makes every page slow in dev until all migrations are applied.
+    enable_profiler: false
