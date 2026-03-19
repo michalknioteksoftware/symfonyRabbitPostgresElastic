@@ -6,5 +6,6 @@ when@dev:
     framework:
         profiler:
             only_exceptions: false
-            # Explicit file DSN so the storage location is never ambiguous
-            dsn: 'file:%kernel.cache_dir%/profiler'
+            # Store profiler data outside var/cache/dev so cache:clear never
+            # wipes it — tokens stay valid across cache rebuilds.
+            dsn: 'file:%kernel.project_dir%/var/profiler'

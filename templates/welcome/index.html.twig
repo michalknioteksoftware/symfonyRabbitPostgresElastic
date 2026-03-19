@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Home · Symfony 8 Boilerplate{% endblock %}
+
+{% block badges %}
+<div class="badges">
+    <span class="badge">PHP <strong>{{ php_version }}</strong></span>
+    <span class="badge">Symfony <strong>{{ symfony_version }}</strong></span>
+    <span class="badge">ENV <strong>{{ app.environment }}</strong></span>
+</div>
+{% endblock %}
+
+{% block body %}
+
+{# ── Status ── #}
+<div class="status-banner">
+    <div class="dot"></div>
+    <div>
+        <p>Application is <strong>running</strong></p>
+        <span>All containers healthy &nbsp;·&nbsp; Debug mode: {{ app.debug ? 'on' : 'off' }}</span>
+    </div>
+</div>
+
+{# ── Services ── #}
+<p class="section-title">Services</p>
+<div class="grid">
+    {% set icons = {
+        'PostgreSQL':    '🐘',
+        'Redis':         '🔴',
+        'RabbitMQ':      '🐰',
+        'Elasticsearch': '🔍',
+    } %}
+
+    {% for service in services %}
+    <div class="card">
+        <span class="card-icon">{{ icons[service.name] ?? '⚙️' }}</span>
+        <h3>{{ service.name }}</h3>
+        <span class="label">{{ service.label }}</span>
+        {% if service.url %}
+            <a class="btn" href="{{ service.url }}" target="_blank" rel="noopener">Open UI ↗</a>
+        {% else %}
+            <span class="no-link">Use a DB client</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Quick links ── #}
+<p class="section-title">Quick links</p>
+<div class="links-row">
+    <a class="link-pill" href="{{ path('health_check') }}">
+        <span class="icon">💚</span> Health check
+    </a>
+    <a class="link-pill" href="{{ path('_profiler_home') }}">
+        <span class="icon">🔬</span> Symfony Profiler
+    </a>
+    <a class="link-pill" href="{{ path('_wdt', { token: 'latest' }) }}">
+        <span class="icon">🛠</span> Debug Toolbar latest
+    </a>
+    <a class="link-pill" href="http://localhost:15672" target="_blank" rel="noopener">
+        <span class="icon">🐰</span> RabbitMQ Management
+    </a>
+    <a class="link-pill" href="http://localhost:9200" target="_blank" rel="noopener">
+        <span class="icon">🔍</span> Elasticsearch API
+    </a>
+</div>
+
+{# ── Useful commands ── #}
+<p class="section-title">Useful commands</p>
+<div class="code-block">
+    <pre>
+<span class="cmt"># Start all services</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="cmt"># Run database migrations</span>
+<span class="cmd">docker compose exec app php bin/console doctrine:migrations:migrate</span>
+
+<span class="cmt"># Consume RabbitMQ messages</span>
+<span class="cmd">docker compose exec app php bin/console messenger:consume async -vv</span>
+
+<span class="cmt"># Clear Symfony cache</span>
+<span class="cmd">docker compose exec app php bin/console cache:clear</span>
+
+<span class="cmt"># Open a shell</span>
+<span class="cmd">docker compose exec app sh</span>
+    </pre>
+</div>
+
+{% endblock %}
