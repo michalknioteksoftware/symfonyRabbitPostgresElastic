@@ -1,0 +1,21 @@
+parameters:
+
+services:
+    # Default service configuration
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Auto-register all classes in src/ as services
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # Elasticsearch client as a named service
+    Elastic\Elasticsearch\Client:
+        factory: ['App\Factory\ElasticsearchClientFactory', 'create']
+        arguments:
+            $elasticsearchUrl: '%env(ELASTICSEARCH_URL)%'

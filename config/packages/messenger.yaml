@@ -1,0 +1,31 @@
+framework:
+    messenger:
+        # Retry failed messages up to 3 times with exponential backoff
+        failure_transport: failed
+
+        transports:
+            # AMQP via RabbitMQ (requires ext-amqp)
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+                options:
+                    exchange:
+                        name: messages
+                        type: direct
+                    queues:
+                        messages: ~
+
+            # Dead-letter queue for permanently failed messages
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: messages_failed
+                    queues:
+                        messages_failed: ~
+
+        routing:
+            # Add your message classes here, e.g.:
+            App\Message\ExampleMessage: async
