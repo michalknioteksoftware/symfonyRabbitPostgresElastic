@@ -42,6 +42,26 @@ class ArticleRepository extends ServiceEntityRepository
     // dynamic (e.g. optional filters). Alias 'a' is used throughout.
 
     /**
+     * Fetch all articles with optional status filter, for the web UI.
+     *
+     * @return Paginator<Article>
+     */
+    public function findPaginated(int $page = 1, int $perPage = 20, string $filterStatus = 'all'): Paginator
+    {
+        $qb = $this->createQueryBuilder('a')->orderBy('a.createdAt', 'DESC');
+
+        if ($filterStatus === 'published') {
+            $qb->where('a.published = true');
+        } elseif ($filterStatus === 'draft') {
+            $qb->where('a.published = false');
+        }
+
+        $qb->setFirstResult(($page - 1) * $perPage)->setMaxResults($perPage);
+
+        return new Paginator($qb);
+    }
+
+    /**
      * Fetch paginated published articles ordered by newest first.
      *
      * @return Paginator<Article>   Doctrine's Paginator wraps the query result

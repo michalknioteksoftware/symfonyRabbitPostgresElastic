@@ -1,0 +1,56 @@
+{#
+  Shared form partial — included by new.html.twig and edit.html.twig.
+  Styles live in public/css/article.css.
+#}
+{{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+<div class="form-card">
+
+    {#
+      Global form errors: catch any constraint violations that are not attached
+      to a specific field (e.g. entity-level class constraints, cross-field rules).
+    #}
+    {% if form.vars.errors|length > 0 %}
+        <div class="form-global-errors">
+            {% for error in form.vars.errors %}
+                <div class="field-error">{{ error.message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Title #}
+    <div class="form-group {{ form.title.vars.errors|length > 0 ? 'form-row-has-error' : '' }}">
+        {{ form_label(form.title) }}
+        {{ form_widget(form.title) }}
+        {% for error in form.title.vars.errors %}
+            <div class="field-error">{{ error.message }}</div>
+        {% endfor %}
+    </div>
+
+    {# Content #}
+    <div class="form-group {{ form.content.vars.errors|length > 0 ? 'form-row-has-error' : '' }}">
+        {{ form_label(form.content) }}
+        {{ form_widget(form.content) }}
+        {% for error in form.content.vars.errors %}
+            <div class="field-error">{{ error.message }}</div>
+        {% endfor %}
+    </div>
+
+    {# Tags #}
+    <div class="form-group {{ form.tagsRaw.vars.errors|length > 0 ? 'form-row-has-error' : '' }}">
+        {{ form_label(form.tagsRaw) }}
+        {{ form_widget(form.tagsRaw) }}
+        {% for error in form.tagsRaw.vars.errors %}
+            <div class="field-error">{{ error.message }}</div>
+        {% endfor %}
+        <div class="field-hint">Comma-separated · letters, numbers, hyphens · max 15 tags · max 50 chars each</div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-submit">{{ submitLabel ?? 'Save Article' }}</button>
+        <a href="{{ cancelUrl ?? path('article_web_index') }}" class="btn-cancel">Cancel</a>
+    </div>
+
+</div>
+
+{{ form_end(form) }}

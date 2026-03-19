@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit: {{ article.title }}{% endblock %}
+{% block header_title %}Edit Article{% endblock %}
+{% block header_sub %}{{ article.title }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/article.css') }}">
+{% endblock %}
+
+{% block badges %}
+    <div class="badges">
+        <a href="{{ path('article_web_show', {id: article.id}) }}" class="badge badge--action">← View article</a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('article_web_show', {id: article.id}) }}" class="back-link">← Back to article</a>
+
+    {% include 'article/_form.html.twig' with {
+        submitLabel: 'Save Changes',
+        cancelUrl: path('article_web_show', {id: article.id})
+    } %}
+{% endblock %}

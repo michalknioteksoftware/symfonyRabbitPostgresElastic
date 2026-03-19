@@ -1,0 +1,248 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Articles — Symfony 8{% endblock %}
+{% block header_title %}Article Manager{% endblock %}
+{% block header_sub %}{{ counts.published }} published · {{ counts.draft }} drafts{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/article.css') }}">
+{% endblock %}
+
+{% block badges %}
+    <div class="badges">
+        <span class="badge"><strong>{{ counts.published + counts.draft }}</strong> total</span>
+        <a href="{{ path('article_web_new') }}" class="badge badge--action">+ New article</a>
+    </div>
+{% endblock %}
+
+{% block body %}
+
+    {# ── Toolbar ── #}
+    <div class="toolbar">
+        <div class="filter-tabs">
+            <a href="{{ path('article_web_index', {status: 'all'}) }}"
+               class="filter-tab {{ filterOnly == 'all' ? 'active' : '' }}">
+                All ({{ counts.published + counts.draft }})
+            </a>
+            <a href="{{ path('article_web_index', {status: 'published'}) }}"
+               class="filter-tab {{ filterOnly == 'published' ? 'active' : '' }}">
+                Published ({{ counts.published }})
+            </a>
+            <a href="{{ path('article_web_index', {status: 'draft'}) }}"
+               class="filter-tab {{ filterOnly == 'draft' ? 'active' : '' }}">
+                Drafts ({{ counts.draft }})
+            </a>
+        </div>
+
+        <form class="search-form" method="GET" action="{{ path('article_web_index') }}">
+            <input type="text" name="q" value="{{ search }}" placeholder="Search articles…">
+            <button class="btn-sm btn-ghost" type="submit">Search</button>
+            {% if search %}
+                <a href="{{ path('article_web_index') }}" class="btn-sm btn-ghost">Clear</a>
+            {% endif %}
+        </form>
+
+        <a href="{{ path('article_web_new') }}" class="btn-sm btn-primary">+ New Article</a>
+    </div>
+
+    {# ── Search result info ── #}
+    {% if search %}
+        <p class="search-info">
+            Showing {{ articles|length }} result(s) for "<strong>{{ search }}</strong>"
+        </p>
+    {% endif %}
+
+    {# ── Table ── #}
+    <div class="table-card">
+        {% if articles is empty %}
+            <div class="empty-state">
+                <p>No articles found.</p>
+                <a href="{{ path('article_web_new') }}" class="btn-sm btn-primary">Create your first article</a>
+            </div>
+        {% else %}
+            <table class="articles-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Tags</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for article in articles %}
+                    <tr>
+                        <td class="td-id">{{ article.id }}</td>
+
+                        <td class="article-title">
+                            <a href="{{ path('article_web_show', {id: article.id}) }}">
+                                {{ article.title }}
+                            </a>
+                            <div class="article-slug">/{{ article.slug }}</div>
+                        </td>
+
+                        <td>
+                            <span class="status-pill {{ article.published ? 'published' : 'draft' }}">
+                                {{ article.published ? 'Published' : 'Draft' }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% for tag in article.tags %}
+                                <span class="tag-chip">{{ tag }}</span>
+                            {% else %}
+                                <span class="tag-empty">—</span>
+                            {% endfor %}
+                        </td>
+
+                        <td class="td-date">{{ article.createdAt|date('M j, Y') }}</td>
+
+                        <td>
+                            <div class="actions">
+                                <a href="{{ path('article_web_show', {id: article.id}) }}"
+                                   class="btn-sm btn-ghost">View</a>
+
+                                <a href="{{ path('article_web_edit', {id: article.id}) }}"
+                                   class="btn-sm btn-ghost">Edit</a>
+
+                                {% if not article.published %}
+                                    <form class="form-inline" method="POST"
+                                          action="{{ path('article_web_publish', {id: article.id}) }}">
+                                        <input type="hidden" name="_token"
+                                               value="{{ csrf_token('publish-article-' ~ article.id) }}">
+                                        <button class="btn-sm btn-primary" type="submit">Publish</button>
+                                    </form>
+                                {% endif %}
+
+                                <form class="form-inline" method="POST"
+                                      action="{{ path('article_web_delete', {id: article.id}) }}"
+                                      onsubmit="return confirm('Delete this article?')">
+                                    <input type="hidden" name="_token"
+                                           value="{{ csrf_token('delete-article-' ~ article.id) }}">
+                                    <button class="btn-sm btn-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    {# ── Pagination ── #}
+    {% if paginator is not null and paginator|length > 20 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ path('article_web_index', {page: page - 1, status: filterOnly}) }}"
+                   class="btn-sm btn-ghost">← Prev</a>
+            {% endif %}
+            <span class="btn-sm btn-ghost btn-static">Page {{ page }}</span>
+            {% if articles|length == 20 %}
+                <a href="{{ path('article_web_index', {page: page + 1, status: filterOnly}) }}"
+                   class="btn-sm btn-ghost">Next →</a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {# ══════════════════════════════════════════════════════════════
+       ELASTICSEARCH SEARCH SECTION
+       - Searches only published & indexed articles (not drafts)
+       - Uses multi_match with fuzziness so minor typos still match
+       - Highlights show which part of the document matched
+    ══════════════════════════════════════════════════════════════ #}
+    <div class="es-section">
+
+        <div class="es-section-header">
+            <h2>Elasticsearch Search</h2>
+            <span class="es-badge">⚡ Elasticsearch</span>
+            <span class="es-badge es-badge--info">Published articles only · fuzzy · relevance-ranked</span>
+        </div>
+
+        {# ES search form — uses es_q param so it doesn't interfere with the DB search above #}
+        <form class="es-search-form" method="GET" action="{{ path('article_web_index') }}">
+            {# Preserve the DB search if it's active #}
+            {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+            {% if filterOnly != 'all' %}<input type="hidden" name="status" value="{{ filterOnly }}">{% endif %}
+
+            <input type="text"
+                   name="es_q"
+                   value="{{ esQuery }}"
+                   placeholder="Search published articles in Elasticsearch…"
+                   autofocus="{{ esQuery ? 'false' : 'false' }}">
+            <button class="btn-es" type="submit">⚡ Search ES</button>
+            {% if esQuery %}
+                <a href="{{ path('article_web_index', search ? {q: search} : {}) }}" class="btn-sm btn-ghost">Clear</a>
+            {% endif %}
+        </form>
+
+        {# ── Results ── #}
+        {% if esQuery %}
+
+            {% if esError %}
+                <div class="es-error">{{ esError }}</div>
+
+            {% elseif esHits is empty %}
+                <p class="es-empty">No results for "<strong>{{ esQuery }}</strong>" in the Elasticsearch index.</p>
+
+            {% else %}
+                <p class="es-summary">
+                    Found <strong>{{ esTotal }}</strong> result{{ esTotal != 1 ? 's' : '' }}
+                    for "<strong>{{ esQuery }}</strong>"
+                    — ranked by relevance score
+                </p>
+
+                <div class="es-results">
+                {% for hit in esHits %}
+                    <div class="es-card">
+
+                        <div class="es-card-title">
+                            {% if hit.highlights.title is defined %}
+                                {# Title highlight from ES — raw HTML with <mark> tags #}
+                                <a href="{{ path('article_web_show', {id: hit.id}) }}">
+                                    {{ hit.highlights.title[0]|raw }}
+                                </a>
+                            {% else %}
+                                <a href="{{ path('article_web_show', {id: hit.id}) }}">
+                                    {{ hit.title }}
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        {# Content snippet — show highlighted fragment if ES returned one #}
+                        {% if hit.highlights.content is defined %}
+                            <div class="es-card-highlight">
+                                …{{ hit.highlights.content[0]|raw }}…
+                            </div>
+                        {% endif %}
+
+                        <div class="es-card-meta">
+                            <span class="es-score">▲ {{ hit.score }}</span>
+
+                            {% for tag in hit.tags %}
+                                <span class="tag-chip">{{ tag }}</span>
+                            {% endfor %}
+
+                            {% if hit.published_at %}
+                                <span>{{ hit.published_at|date('M j, Y') }}</span>
+                            {% endif %}
+
+                            <a href="{{ path('article_web_show', {id: hit.id}) }}"
+                               style="margin-left:auto" class="btn-sm btn-ghost">View →</a>
+                        </div>
+
+                    </div>
+                {% endfor %}
+                </div>
+
+            {% endif %}
+
+        {% else %}
+            <p class="es-empty">Enter a term above to search the Elasticsearch index.</p>
+        {% endif %}
+
+    </div>
+
+{% endblock %}

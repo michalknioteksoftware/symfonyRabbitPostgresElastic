@@ -1,0 +1,577 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   article.css — styles for the Article management UI
+   (index, show, new, edit pages)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared button scale (small, used in table rows and toolbar) ── */
+.btn-sm {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity .15s;
+}
+.btn-sm:hover { opacity: .85; text-decoration: none; }
+
+.btn-primary { background: var(--accent-dim); color: #fff; }
+.btn-ghost   { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+.btn-danger  { background: #7f1d1d; color: #fca5a5; }
+.btn-static  { cursor: default; }  /* pagination current-page indicator */
+
+/* ── Shared button scale (full-width, used in show sidebar) ── */
+.btn-full {
+    display: block;
+    text-align: center;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: opacity .15s;
+    width: 100%;
+}
+.btn-full:hover  { opacity: .85; text-decoration: none; }
+.btn-full.primary { background: var(--accent-dim); color: #fff; }
+.btn-full.ghost  { background: var(--bg); border: 1px solid var(--border); color: var(--muted); }
+.btn-full.ghost:hover { color: var(--text); border-color: var(--accent); }
+.btn-full.success { background: #14532d; color: #86efac; }
+.btn-full.danger  { background: #7f1d1d; color: #fca5a5; }
+
+/* Inline form wrapper — lets a <form> sit next to other inline elements */
+.form-inline { display: inline; }
+
+/* ── Tag chip ── */
+.tag-chip {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin: 1px 2px;
+}
+
+/* ── Status pill ── */
+.status-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+.status-pill.published { background: #14532d44; color: #86efac; }
+.status-pill.draft     { background: #1e293b;   color: var(--muted); }
+
+/* Header badge variants for published / draft state */
+.badge--published { border-color: var(--green);  color: #86efac; }
+.badge--draft     { border-color: var(--border); color: var(--muted); }
+
+/* ══════════════════════════════════════════════════════
+   INDEX PAGE
+   ══════════════════════════════════════════════════════ */
+
+/* ── Toolbar ── */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.filter-tabs { display: flex; gap: 4px; }
+
+.filter-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s;
+}
+.filter-tab:hover,
+.filter-tab.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ── Search form ── */
+.search-form {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.search-form input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: var(--text);
+    font-size: 0.82rem;
+    width: 220px;
+}
+.search-form input:focus { outline: none; border-color: var(--accent); }
+
+/* Search result info line */
+.search-info {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+}
+.search-info strong { color: var(--text); }
+
+/* ── Table card wrapper ── */
+.table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+/* ── Articles table ── */
+.articles-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.articles-table th {
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.articles-table td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.articles-table tr:last-child td { border-bottom: none; }
+.articles-table tr:hover td { background: rgba(255,255,255,.02); }
+
+/* Column-specific helpers */
+.td-id   { color: var(--muted); font-size: 0.78rem; }
+.td-date { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+
+.article-title a { font-weight: 600; color: var(--text); text-decoration: none; }
+.article-title a:hover { color: var(--accent); }
+
+.article-slug {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.tag-empty { color: var(--muted); font-size: 0.75rem; }
+
+.actions { display: flex; gap: 6px; align-items: center; }
+
+/* ── Empty state ── */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--muted);
+}
+.empty-state p { margin-bottom: 16px; font-size: 0.9rem; }
+
+/* ── Pagination ── */
+.pagination {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+/* ══════════════════════════════════════════════════════
+   ELASTICSEARCH SEARCH SECTION
+   ══════════════════════════════════════════════════════ */
+
+/* Section wrapper with a distinct amber/gold left border
+   to visually separate it from the PostgreSQL table above */
+.es-section {
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+}
+
+.es-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.es-section-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Pill badges on the section header */
+.es-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #78350f33;
+    border: 1px solid #d97706;
+    color: #fcd34d;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.es-badge--info {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Search form — visually matches the DB search form but amber accent */
+.es-search-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.es-search-form input {
+    background: var(--surface);
+    border: 1px solid #d97706;
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: var(--text);
+    font-size: 0.82rem;
+    width: 280px;
+    transition: border-color .15s;
+}
+.es-search-form input:focus { outline: none; border-color: #f59e0b; }
+
+.btn-es {
+    padding: 6px 16px;
+    background: #78350f;
+    color: #fcd34d;
+    border: 1px solid #d97706;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s;
+}
+.btn-es:hover { background: #92400e; text-decoration: none; }
+
+/* Error / empty state inside ES section */
+.es-error {
+    background: #7f1d1d22;
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: #fca5a5;
+}
+
+.es-empty {
+    color: var(--muted);
+    font-size: 0.875rem;
+    padding: 20px 0;
+}
+
+/* Results summary line */
+.es-summary {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+.es-summary strong { color: #fcd34d; }
+
+/* Result cards grid */
+.es-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+}
+
+.es-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid #d97706;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color .15s, transform .15s;
+}
+.es-card:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+}
+
+.es-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.es-card-title a { color: var(--text); text-decoration: none; }
+.es-card-title a:hover { color: #fcd34d; }
+
+/* Highlighted matches (ES wraps them in <mark>) */
+.es-card-highlight {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 6px 0 8px;
+}
+.es-card-highlight mark {
+    background: #78350f88;
+    color: #fcd34d;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+.es-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.es-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #78350f44;
+    border: 1px solid #d97706;
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #fcd34d;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════
+   SHOW PAGE
+   ══════════════════════════════════════════════════════ */
+
+.article-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .article-layout { grid-template-columns: 1fr; }
+}
+
+.content-label {
+    color: var(--muted);
+    font-size: 0.72rem;
+    margin-bottom: 8px;
+}
+
+.article-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ── Sidebar ── */
+.sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.sidebar-card h4 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+
+.slug-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    word-break: break-all;
+    margin-bottom: 14px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-row .label { color: var(--muted); }
+.meta-row .value { color: var(--text); font-weight: 500; }
+.meta-row .value--published { color: #86efac; }
+.meta-row .value--draft     { color: var(--muted); }
+
+.action-buttons { display: flex; flex-direction: column; gap: 8px; }
+
+/* "Published & indexed" confirmation message */
+.published-confirm {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #86efac;
+    padding: 6px;
+}
+
+/* ── API endpoint list in sidebar ── */
+.api-endpoints-list {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 2;
+}
+
+.method-get    { color: var(--green);  }
+.method-patch  { color: var(--yellow); }
+.method-post   { color: var(--accent); }
+.method-delete { color: var(--red);    }
+.api-url       { color: var(--muted);  }
+
+/* ══════════════════════════════════════════════════════
+   FORM (new / edit)
+   ══════════════════════════════════════════════════════ */
+
+/* Global form error box — appears at top of form card */
+.form-global-errors {
+    background: #7f1d1d22;
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    max-width: 760px;
+}
+
+.form-group { margin-bottom: 22px; }
+
+.form-group label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color .15s;
+    resize: vertical;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.field-error {
+    color: #fca5a5;
+    font-size: 0.78rem;
+    margin-top: 5px;
+}
+
+.field-hint {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 5px;
+}
+
+.form-row-has-error input,
+.form-row-has-error textarea { border-color: var(--red) !important; }
+
+.form-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+.btn-submit {
+    padding: 10px 24px;
+    background: var(--accent-dim);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-submit:hover { background: var(--accent); }
+
+.btn-cancel {
+    padding: 10px 20px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: border-color .15s;
+}
+.btn-cancel:hover { border-color: var(--accent); color: var(--text); text-decoration: none; }

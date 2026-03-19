@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Article — Symfony 8{% endblock %}
+{% block header_title %}New Article{% endblock %}
+{% block header_sub %}Fill in the details below and save. Publish when you're ready.{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/article.css') }}">
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('article_web_index') }}" class="back-link">← Back to articles</a>
+
+    {% include 'article/_form.html.twig' with {
+        submitLabel: 'Create Article',
+        cancelUrl: path('article_web_index')
+    } %}
+{% endblock %}

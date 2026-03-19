@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ article.title }} — Articles{% endblock %}
+{% block header_title %}{{ article.title }}{% endblock %}
+{% block header_sub %}
+    {{ article.published ? 'Published ' ~ article.publishedAt|date('M j, Y') : 'Draft' }}
+    · created {{ article.createdAt|date('M j, Y') }}
+{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/article.css') }}">
+{% endblock %}
+
+{% block badges %}
+    <div class="badges">
+        <span class="badge {{ article.published ? 'badge--published' : 'badge--draft' }}">
+            {{ article.published ? 'Published' : 'Draft' }}
+        </span>
+        <span class="badge">ID: <strong>{{ article.id }}</strong></span>
+    </div>
+{% endblock %}
+
+{% block body %}
+
+    <a href="{{ path('article_web_index') }}" class="back-link">← Back to articles</a>
+
+    <div class="article-layout">
+
+        {# ── Main content ── #}
+        <div>
+            <p class="content-label">Content</p>
+            <div class="article-body">{{ article.content }}</div>
+        </div>
+
+        {# ── Sidebar ── #}
+        <aside>
+
+            {# Meta #}
+            <div class="sidebar-card">
+                <h4>Details</h4>
+
+                <div class="slug-box">/{{ article.slug }}</div>
+
+                <div class="meta-row">
+                    <span class="label">Status</span>
+                    <span class="value {{ article.published ? 'value--published' : 'value--draft' }}">
+                        {{ article.published ? 'Published' : 'Draft' }}
+                    </span>
+                </div>
+                <div class="meta-row">
+                    <span class="label">Created</span>
+                    <span class="value">{{ article.createdAt|date('M j, Y H:i') }}</span>
+                </div>
+                {% if article.updatedAt %}
+                <div class="meta-row">
+                    <span class="label">Updated</span>
+                    <span class="value">{{ article.updatedAt|date('M j, Y H:i') }}</span>
+                </div>
+                {% endif %}
+                {% if article.publishedAt %}
+                <div class="meta-row">
+                    <span class="label">Published</span>
+                    <span class="value">{{ article.publishedAt|date('M j, Y H:i') }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Tags #}
+            {% if article.tags|length > 0 %}
+            <div class="sidebar-card">
+                <h4>Tags</h4>
+                {% for tag in article.tags %}
+                    <span class="tag-chip">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {# Actions #}
+            <div class="sidebar-card">
+                <h4>Actions</h4>
+                <div class="action-buttons">
+
+                    <a href="{{ path('article_web_edit', {id: article.id}) }}"
+                       class="btn-full ghost">Edit Article</a>
+
+                    {% if not article.published %}
+                        <form method="POST" action="{{ path('article_web_publish', {id: article.id}) }}">
+                            <input type="hidden" name="_token"
+                                   value="{{ csrf_token('publish-article-' ~ article.id) }}">
+                            <button type="submit" class="btn-full success">Publish</button>
+                        </form>
+                    {% else %}
+                        <div class="published-confirm">✓ Published &amp; indexed in Elasticsearch</div>
+                    {% endif %}
+
+                    <form method="POST"
+                          action="{{ path('article_web_delete', {id: article.id}) }}"
+                          onsubmit="return confirm('Delete this article permanently?')">
+                        <input type="hidden" name="_token"
+                               value="{{ csrf_token('delete-article-' ~ article.id) }}">
+                        <button type="submit" class="btn-full danger">Delete Article</button>
+                    </form>
+
+                </div>
+            </div>
+
+            {# API reference #}
+            <div class="sidebar-card">
+                <h4>API Endpoints</h4>
+                <div class="api-endpoints-list">
+                    <div>
+                        <span class="method-get">GET</span>
+                        <a class="api-url" href="/api/articles/{{ article.id }}" target="_blank">
+                            /api/articles/{{ article.id }}
+                        </a>
+                    </div>
+                    <div>
+                        <span class="method-patch">PATCH</span>
+                        <span class="api-url">/api/articles/{{ article.id }}</span>
+                    </div>
+                    <div>
+                        <span class="method-post">POST</span>
+                        <span class="api-url">/api/articles/{{ article.id }}/publish</span>
+                    </div>
+                    <div>
+                        <span class="method-delete">DELETE</span>
+                        <span class="api-url">/api/articles/{{ article.id }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+{% endblock %}
