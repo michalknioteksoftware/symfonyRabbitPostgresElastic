@@ -27,5 +27,5 @@ framework:
                         messages_failed: ~
 
         routing:
-            # Add your message classes here, e.g.:
             App\Message\ExampleMessage: async
+            App\Message\ArticlePublishedMessage: async
